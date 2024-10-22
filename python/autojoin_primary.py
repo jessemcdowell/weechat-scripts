@@ -87,7 +87,7 @@ def cmd_only_server(server, server_buffer):
     while weechat.infolist_next(channel_list):
         channel = weechat.infolist_string(channel_list, "name")
         if not channel in primary_autojoin_list:
-            weechat.prnt(server_buffer, "WOULD: /part %s" % channel)
+            weechat.command(server_buffer, "/close %s" % channel)
     return weechat.WEECHAT_RC_OK
 
 def cmd_only(buffer, args):
