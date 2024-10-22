@@ -39,11 +39,9 @@ def cmd_list(buffer, args):
         server_list = weechat.infolist_get("irc_server", "", "")
         while weechat.infolist_next(server_list):
             server = weechat.infolist_string(server_list, "name")
-            channel_list = weechat.config_get_plugin("%s.autojoin" % server)
-            if channel_list:
-                for channel in channel_list.split(","):
-                    weechat.prnt("", "  %s @ %s" % (channel, server))
-                    any = True
+            for channel in get_autojoin_list(server):
+                weechat.prnt("", "  %s @ %s" % (channel, server))
+                any = True
         if not any:
             weechat.prnt("", "  (none)")
 
@@ -54,11 +52,11 @@ def cmd_list(buffer, args):
 
         server_buffer = weechat.info_get("irc_buffer", server)
         weechat.prnt(server_buffer, "Primary autojoin list for %s:" % server)
-        channel_list = weechat.config_get_plugin("%s.autojoin" % server)
-        if channel_list:
-            for channel in channel_list.split(","):
-                weechat.prnt(server_buffer, "  %s" % channel)
-        else:
+        any = False
+        for channel in get_autojoin_list(server):
+            weechat.prnt(server_buffer, "  %s" % channel)
+            any = True
+        if not any:
             weechat.prnt(server_buffer, "  (none)")
 
     return weechat.WEECHAT_RC_OK
@@ -73,7 +71,19 @@ def cmd_add(buffer, args):
             weechat.prnt(server_buffer, "%s\"%s\" is not a valid channel name for irc" % (weechat.prefix("error"), channel))
             return weechat.WEECHAT_RC_ERROR
 
-    return weechat.WEECHAT_RC_OK
+    autojoin_list = get_autojoin_list(server)
+    any = False
+    for channel in args:
+        if channel not in autojoin_list:
+            autojoin_list.append(channel)
+            any = True
+        else:
+            weechat.prnt(server_buffer, "%sChannel \"%s\" is already in primary autojoin list" % (weechat.prefix("error"), channel))
+    if any:
+        set_autojoin_list(server, autojoin_list)
+        weechat.prnt(server_buffer, "Primary autojoin list updated to: %s" % ", ".join(autojoin_list))
+        return weechat.WEECHAT_RC_OK
+    return weechat.WEECHAT_RC_ERROR
 
 def get_server(buffer, command):
     server = weechat.buffer_get_string(buffer, "localvar_server")
@@ -82,6 +92,19 @@ def get_server(buffer, command):
         return ("", "")
     server_buffer = weechat.info_get("irc_buffer", server)
     return (server, server_buffer)
+
+def get_autojoin_list(server):
+    text = weechat.config_get_plugin("%s.autojoin" % server)
+    if not text:
+        return []
+    return text.split(",")
+
+def set_autojoin_list(server, channel_list):
+    if channel_list:
+        text = ",".join(channel_list)
+    else:
+        text = ""
+    weechat.config_set_plugin("%s.autojoin" % server, text)
 
 def autojoin_primary_cb(_, buffer, args):
     split = args.split()
