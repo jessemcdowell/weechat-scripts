@@ -58,7 +58,25 @@ def cmd_list(buffer, args):
             any = True
         if not any:
             weechat.prnt(server_buffer, "  (none)")
+    return weechat.WEECHAT_RC_OK
 
+def cmd_join(buffer, args):
+    if "-all" in args:
+        server_list = weechat.infolist_get("irc_server", "", "")
+        while weechat.infolist_next(server_list):
+            if weechat.infolist_integer(server_list, "is_connected"):
+                server = weechat.infolist_string(server_list, "name")
+                server_buffer = weechat.infolist_pointer(server_list, "buffer")
+                autojoin_list = get_autojoin_list(server)
+                for channel in autojoin_list:
+                    weechat.command(server_buffer, "/join %s" % channel)
+    else:
+        server, server_buffer = get_server(buffer, "list")
+        if server == "":
+            return weechat.WEECHAT_RC_ERROR
+        autojoin_list = get_autojoin_list(server)
+        for channel in autojoin_list:
+            weechat.command(server_buffer, "/join %s" % channel)
     return weechat.WEECHAT_RC_OK
 
 def cmd_add(buffer, args):
@@ -139,7 +157,9 @@ def autojoin_primary_cb(_, buffer, args):
         return cmd_add(buffer, split[1:])
     if split[0] == "del":
         return cmd_del(buffer, split[1:])
-    weechat.prnt("", "%scommand \"%s\" not recognized, see /help $s" % (weechat.prefix("error"), split[0], SCRIPT_COMMAND))
+    if split[0] == "join":
+        return cmd_join(buffer, split[1:])
+    weechat.prnt("", "%s/%s %s not recognized, see /help %s" % (weechat.prefix("error"), SCRIPT_COMMAND, split[0], SCRIPT_COMMAND))
     return weechat.WEECHAT_RC_ERROR
 
 if __name__ == "__main__" and import_ok:
