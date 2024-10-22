@@ -66,6 +66,9 @@ def cmd_add(buffer, args):
     if server == "":
         return weechat.WEECHAT_RC_ERROR
 
+    if (not args):
+        weechat.prnt(server_buffer, "%sYou must specify at least one channel to add to primary autojoin list" % weechat.prefix("error"))
+
     for channel in args:
         if not weechat.info_get("irc_is_channel", channel):
             weechat.prnt(server_buffer, "%s\"%s\" is not a valid channel name for irc" % (weechat.prefix("error"), channel))
@@ -79,6 +82,28 @@ def cmd_add(buffer, args):
             any = True
         else:
             weechat.prnt(server_buffer, "%sChannel \"%s\" is already in primary autojoin list" % (weechat.prefix("error"), channel))
+    if any:
+        set_autojoin_list(server, autojoin_list)
+        weechat.prnt(server_buffer, "Primary autojoin list updated to: %s" % ", ".join(autojoin_list))
+        return weechat.WEECHAT_RC_OK
+    return weechat.WEECHAT_RC_ERROR
+
+def cmd_del(buffer, args):
+    server, server_buffer = get_server(buffer, "add")
+    if server == "":
+        return weechat.WEECHAT_RC_ERROR
+
+    if (not args):
+        weechat.prnt(server_buffer, "%sYou must specify at least one channel to delete from primary autojoin list" % weechat.prefix("error"))
+
+    autojoin_list = get_autojoin_list(server)
+    any = False
+    for channel in args:
+        if channel in autojoin_list:
+            autojoin_list.remove(channel)
+            any = True
+        else:
+            weechat.prnt(server_buffer, "%sChannel \"%s\" is not in primary autojoin list" % (weechat.prefix("error"), channel))
     if any:
         set_autojoin_list(server, autojoin_list)
         weechat.prnt(server_buffer, "Primary autojoin list updated to: %s" % ", ".join(autojoin_list))
@@ -112,6 +137,8 @@ def autojoin_primary_cb(_, buffer, args):
         return cmd_list(buffer, split[1:])
     if split[0] == "add":
         return cmd_add(buffer, split[1:])
+    if split[0] == "del":
+        return cmd_del(buffer, split[1:])
     weechat.prnt("", "%scommand \"%s\" not recognized, see /help $s" % (weechat.prefix("error"), split[0], SCRIPT_COMMAND))
     return weechat.WEECHAT_RC_ERROR
 
@@ -119,8 +146,8 @@ if __name__ == "__main__" and import_ok:
     if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE, SCRIPT_DESC, "", ""):
         weechat.hook_command(SCRIPT_COMMAND, "Autojoin Primary Channels",
                  "[list] [-all]"
-                 " || add <name>"
-                 " || del <name>"
+                 " || add <name> [<channel>...]"
+                 " || del <name> [<channel>...]"
                  " || join [-all]"
                  " || only [-all]",
                  "      list: list all primary channels\n"
