@@ -32,9 +32,30 @@ except:
     print("This script must be run under WeeChat.")
     import_ok = False
 
-def autojoin_primary_cmd(data, buffer, args):
-    weechat.prnt("", args)
+def cmd_list(buffer, args):
+    if "-all" in args:
+        """temp"""
+        weechat.prnt(buffer, "list all")
+    else:
+        server = weechat.buffer_get_string(weechat.current_buffer(), "localvar_server")
+        if server == "":
+            """temp"""
+            weechat.prnt(buffer, "%scommand \"%s\" must be run on irc buffer (server, channel, or private)" % (weechat.prefix("error"), SCRIPT_COMMAND))
+            return weechat.WEECHAT_RC_ERROR
+        weechat.prnt(buffer, "list for server: " + server)
     return weechat.WEECHAT_RC_OK
+
+def autojoin_primary_cmd(data, buffer, args):
+    """temp"""
+    weechat.prnt(buffer, "data: " + data)
+    weechat.prnt(buffer, "buffer: " + buffer)
+    weechat.prnt(buffer, "args: " + args)
+
+    split = args.split()
+    if not split or split[0] == "list":
+        return cmd_list(buffer, split[1:])
+    weechat.prnt(buffer, "%scommand \"%s\" not recognized, see /help $s" % (weechat.prefix("error"), split[0], SCRIPT_COMMAND))
+    return weechat.WEECHAT_RC_ERROR
 
 if __name__ == "__main__" and import_ok:
     if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE, SCRIPT_DESC, "", ""):
@@ -53,9 +74,9 @@ if __name__ == "__main__" and import_ok:
                  "Without argument, this command lists primary channels for the current server.\n"
                  "\n"
                  "Examples:\n"
-                 "  Add a primary channel:                                 /${SCRIPT_COMMAND} add #myroom\n"
-                 "  Join primary channels on all servers:                  /${SCRIPT_COMMAND} join -all\n"
-                 "  Leave all non-primary channels on the current server:  /${SCRIPT_COMMAND} only\n",
+                 f"  Add a primary channel:                                 /{SCRIPT_COMMAND} add #myroom\n"
+                 f"  Join primary channels on all servers:                  /{SCRIPT_COMMAND} join -all\n"
+                 f"  Leave all non-primary channels on the current server:  /{SCRIPT_COMMAND} only\n",
                  "list -all"
                  " || add %(channel)"
                  " || del %(channel)"
