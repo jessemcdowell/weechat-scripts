@@ -54,13 +54,14 @@ def cmd_list(args):
             weechat.prnt("", "%scommand \"%s\" must be run on irc buffer (server, channel, or private)" % (weechat.prefix("error"), SCRIPT_COMMAND))
             return weechat.WEECHAT_RC_ERROR
 
-        weechat.prnt(weechat.current_buffer(), "Primary autojoin list for %s:" % server)
+        server_buffer = weechat.info_get("irc_buffer", server)
+        weechat.prnt(server_buffer, "Primary autojoin list for %s:" % server)
         channel_list = weechat.config_get_plugin("%s.autojoin" % server)
         if channel_list:
             for channel in channel_list.split(","):
-                weechat.prnt(weechat.current_buffer(), "  %s" % channel)
+                weechat.prnt(server_buffer, "  %s" % channel)
         else:
-            weechat.prnt(weechat.current_buffer(), "  (none)")
+            weechat.prnt(server_buffer, "  (none)")
 
     return weechat.WEECHAT_RC_OK
 
@@ -71,12 +72,7 @@ def cmd_add(args):
             return weechat.WEECHAT_RC_ERROR
     return weechat.WEECHAT_RC_OK
 
-def autojoin_primary_cb(data, buffer, args):
-    """temp"""
-    weechat.prnt(buffer, "data: " + data)
-    weechat.prnt(buffer, "buffer: " + buffer)
-    weechat.prnt(buffer, "args: " + args)
-
+def autojoin_primary_cb(_, buffer, args):
     split = args.split()
     if not split or split[0] == "list":
         return cmd_list(split[1:])
