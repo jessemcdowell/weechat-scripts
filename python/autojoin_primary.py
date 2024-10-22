@@ -32,20 +32,46 @@ except:
     print("This script must be run under WeeChat.")
     import_ok = False
 
-def cmd_list(buffer, args):
+def cmd_list(args):
     if "-all" in args:
-        """temp"""
-        weechat.prnt(buffer, "list all")
+        weechat.prnt("", "Primary autojoin list for all servers:")
+        any = False
+        server_list = weechat.infolist_get("irc_server", "", "")
+        while weechat.infolist_next(server_list):
+            server = weechat.infolist_string(server_list, "name")
+            channel_list = weechat.config_get_plugin("%s.autojoin" % server)
+            if channel_list:
+                for channel in channel_list.split(","):
+                    weechat.prnt("", "  %s @ %s" % (channel, server))
+                    any = True
+        if not any:
+            weechat.prnt("", "  (none)")
+
     else:
         server = weechat.buffer_get_string(weechat.current_buffer(), "localvar_server")
         if server == "":
             """temp"""
-            weechat.prnt(buffer, "%scommand \"%s\" must be run on irc buffer (server, channel, or private)" % (weechat.prefix("error"), SCRIPT_COMMAND))
+            weechat.prnt("", "%scommand \"%s\" must be run on irc buffer (server, channel, or private)" % (weechat.prefix("error"), SCRIPT_COMMAND))
             return weechat.WEECHAT_RC_ERROR
-        weechat.prnt(buffer, "list for server: " + server)
+
+        weechat.prnt(weechat.current_buffer(), "Primary autojoin list for %s:" % server)
+        channel_list = weechat.config_get_plugin("%s.autojoin" % server)
+        if channel_list:
+            for channel in channel_list.split(","):
+                weechat.prnt(weechat.current_buffer(), "  %s" % channel)
+        else:
+            weechat.prnt(weechat.current_buffer(), "  (none)")
+
     return weechat.WEECHAT_RC_OK
 
-def autojoin_primary_cmd(data, buffer, args):
+def cmd_add(args):
+    for channel in args:
+        if not weechat.info_get("irc_is_channel", channel):
+            weechat.prnt("", "%s\"%s\" is not a valid channel name for irc" % (weechat.prefix("error"), channel))
+            return weechat.WEECHAT_RC_ERROR
+    return weechat.WEECHAT_RC_OK
+
+def autojoin_primary_cb(data, buffer, args):
     """temp"""
     weechat.prnt(buffer, "data: " + data)
     weechat.prnt(buffer, "buffer: " + buffer)
@@ -53,8 +79,8 @@ def autojoin_primary_cmd(data, buffer, args):
 
     split = args.split()
     if not split or split[0] == "list":
-        return cmd_list(buffer, split[1:])
-    weechat.prnt(buffer, "%scommand \"%s\" not recognized, see /help $s" % (weechat.prefix("error"), split[0], SCRIPT_COMMAND))
+        return cmd_list(split[1:])
+    weechat.prnt("", "%scommand \"%s\" not recognized, see /help $s" % (weechat.prefix("error"), split[0], SCRIPT_COMMAND))
     return weechat.WEECHAT_RC_ERROR
 
 if __name__ == "__main__" and import_ok:
@@ -82,4 +108,4 @@ if __name__ == "__main__" and import_ok:
                  " || del %(channel)"
                  " || join -all"
                  " || only [-all]",
-                 "autojoin_primary_cmd", "")
+                 "autojoin_primary_cb", "")
