@@ -34,27 +34,31 @@ except:
 
 def autojoin_primary_cmd(data, buffer, args):
     weechat.prnt("", args)
-
+    return weechat.WEECHAT_RC_OK
 
 if __name__ == "__main__" and import_ok:
     if weechat.register(SCRIPT_NAME, SCRIPT_AUTHOR, SCRIPT_VERSION, SCRIPT_LICENSE, SCRIPT_DESC, "", ""):
-
-    weechat.hook_command(SCRIPT_COMMAND, "Autojoin Primary Channels",
-             "[list] [-all]"
-             " || add <name>"
-             " || del <name>"
-             " || join [-all]"
-             " || only [-all]"
-             "      list: list all primary channels\n"
-             "       add: add a primary channel\n"
-             "       del: delete a primary channel\n"
-             "      join: join all primary channels\n"
-             "      only: join only primary channels (leave all others)\n"
-             "\n"
-             "Without argument, this command lists primary channels for the current server.\n"
-             "\n"
-             "Examples:\n"
-             "  Add a primary channel:                                 /${SCRIPT_COMMAND} add #myroom\n"
-             "  Join primary channels on all servers:                  /${SCRIPT_COMMAND} join -all\n"
-             "  Leave all non-primary channels on the current server:  /${SCRIPT_COMMAND} only\n"
-             "autojoin_primary_cmd", "")
+        weechat.hook_command(SCRIPT_COMMAND, "Autojoin Primary Channels",
+                 "[list] [-all]"
+                 " || add <name>"
+                 " || del <name>"
+                 " || join [-all]"
+                 " || only [-all]",
+                 "      list: list all primary channels\n"
+                 "       add: add a primary channel\n"
+                 "       del: delete a primary channel\n"
+                 "      join: join all primary channels\n"
+                 "      only: join only primary channels (leave all others)\n"
+                 "\n"
+                 "Without argument, this command lists primary channels for the current server.\n"
+                 "\n"
+                 "Examples:\n"
+                 "  Add a primary channel:                                 /${SCRIPT_COMMAND} add #myroom\n"
+                 "  Join primary channels on all servers:                  /${SCRIPT_COMMAND} join -all\n"
+                 "  Leave all non-primary channels on the current server:  /${SCRIPT_COMMAND} only\n",
+                 "list -all"
+                 " || add %(channel)"
+                 " || del %(channel)"
+                 " || join -all"
+                 " || only [-all]",
+                 "autojoin_primary_cmd", "")
