@@ -32,7 +32,7 @@ except:
     print("This script must be run under WeeChat.")
     import_ok = False
 
-def cmd_list(args):
+def cmd_list(buffer, args):
     if "-all" in args:
         weechat.prnt("", "Primary autojoin list for all servers:")
         any = False
@@ -48,10 +48,8 @@ def cmd_list(args):
             weechat.prnt("", "  (none)")
 
     else:
-        server = weechat.buffer_get_string(weechat.current_buffer(), "localvar_server")
+        server, server_buffer = get_server(buffer, "list")
         if server == "":
-            """temp"""
-            weechat.prnt("", "%scommand \"%s\" must be run on irc buffer (server, channel, or private)" % (weechat.prefix("error"), SCRIPT_COMMAND))
             return weechat.WEECHAT_RC_ERROR
 
         server_buffer = weechat.info_get("irc_buffer", server)
@@ -65,17 +63,32 @@ def cmd_list(args):
 
     return weechat.WEECHAT_RC_OK
 
-def cmd_add(args):
+def cmd_add(buffer, args):
+    server, server_buffer = get_server(buffer, "add")
+    if server == "":
+        return weechat.WEECHAT_RC_ERROR
+
     for channel in args:
         if not weechat.info_get("irc_is_channel", channel):
-            weechat.prnt("", "%s\"%s\" is not a valid channel name for irc" % (weechat.prefix("error"), channel))
+            weechat.prnt(server_buffer, "%s\"%s\" is not a valid channel name for irc" % (weechat.prefix("error"), channel))
             return weechat.WEECHAT_RC_ERROR
+
     return weechat.WEECHAT_RC_OK
+
+def get_server(buffer, command):
+    server = weechat.buffer_get_string(buffer, "localvar_server")
+    if server == "":
+        weechat.prnt("", "%s/%s %s must be run on irc buffer (server, channel, or private)" % (weechat.prefix("error"), command, SCRIPT_COMMAND))
+        return ("", "")
+    server_buffer = weechat.info_get("irc_buffer", server)
+    return (server, server_buffer)
 
 def autojoin_primary_cb(_, buffer, args):
     split = args.split()
     if not split or split[0] == "list":
-        return cmd_list(split[1:])
+        return cmd_list(buffer, split[1:])
+    if split[0] == "add":
+        return cmd_add(buffer, split[1:])
     weechat.prnt("", "%scommand \"%s\" not recognized, see /help $s" % (weechat.prefix("error"), split[0], SCRIPT_COMMAND))
     return weechat.WEECHAT_RC_ERROR
 
